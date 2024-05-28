@@ -5,17 +5,17 @@ from threading import Timer
 from functools import reduce
 
 # 이미지, 사운드, 맵
-from images import SAND_IMAGE, TILE_IMAGE, WALL_IMAGE, PIPE1_IMAGE, PIPE2_IMAGE, PIPE3_IMAGE, DOOR_IMAGE, OPENED_DOOR_IMAGE, DOOR_2_IMAGE, OPENED_DOOR_2_IMAGE, WEB1_IMAGE, WEB2_IMAGE, WALL2_IMAGE, WALL3_IMAGE, WALL4_IMAGE, TERMINAL_IMAGE, TERMINAL_SCREEN_IMAGE, PLAYER_OUTLINE_IMAGE, PLAYER_DETAIL_IMAGE, PLAYER_FRONT_IMAGE, PLAYER_BACK_IMAGE, PLAYER_LEFT_IMAGE, PLAYER_RIGHT_IMAGE, PLAYER_FRONT_WALK_IMAGE, PLAYER_BACK_WALK_IMAGE, PLAYER_LEFT_WALK_IMAGE, PLAYER_RIGHT_WALK_IMAGE, VIGNETTE1_IMAGE, VIGNETTE2_IMAGE, STOP_IMAGE, BOTTLE_IMAGE, KEY_IMAGE, FLASHLIGHT_IMAGE, HOARDING_BUG_IMAGE, BRACKEN_IMAGE, BRACKEN_WALK_IMAGE, COIL_HEAD_IMAGE, HOARDING_BUG_WALK_IMAGE, JESTER_IMAGE, JESTER_DOING_IMAGE, JESTER_WALK_IMAGE, JESTER_OPENED_IMAGE, JESTER_OPENED_WALK_IMAGE
-from sounds import MAIN_MUSIC_1, MAIN_MUSIC_2, LOBBY_MUSIC_3, INTRO_MUSIC, METAL_DOOR_SHUT, DOOR_OPENING, NOISE, METAL_WALK_1, METAL_WALK_2, METAL_WALK_3, METAL_WALK_4, GRAB_SHOVEL, GRAB_KEY, GRAB_BOTTLE, GRAB_FLASHLIGHT, DROP_SHOVEL, DROP_KEY, DROP_BOTTLE, DROP_FLASHLIGHT, FLASHLIGHT_CLICK
-from maps import ShipArray
-from seeds import generate_maze
+from images import *
+from sounds import *
+from maps import *
+from seeds import *
 
 # 전체적인 설정
 CONFIG = {
     'SCREEN_WIDTH': 900, # 너비
     'SCREEN_HEIGHT': 900, # 높이
     'TILE_SIZE': 100, # 타일 사이즈
-    'DEBUG': True # 디버그
+    'DEBUG': False # 디버그
 }
 
 # 초기화
@@ -234,17 +234,17 @@ Ship = Map(MAP_ID='ship', MAP_DISPLAY_NAME='ship', MAP_ARRAY=ShipArray)
 # INGAME['CUR_MAP'] = Ship.MAP_ID
 
 # 공장 맵
-maze = generate_maze(41, 41)
-FactoryArray = maze
+OUTPUT = generate_maze()
+FactoryArray = OUTPUT[0]
 
 Factory = Map(MAP_ID='factory', MAP_DISPLAY_NAME='factory', MAP_ARRAY=FactoryArray)
 INGAME['CUR_MAP'] = Factory.MAP_ID
 
-for IDX in range(0, 100):
-    RECT_X = random.randrange(1, 41) * 100
-    RECT_Y = random.randrange(1, 41) * 100
+for IDX in range(0, 50):
+    RECT_X = random.randrange(1, OUTPUT[1]) * 100
+    RECT_Y = random.randrange(1, OUTPUT[2]) * 100
 
-    if not Factory.MAP_ARRAY[int(RECT_Y / 100)][int(RECT_X / 100)] == 1:
+    if not Factory.MAP_ARRAY[int(RECT_Y / 100)][int(RECT_X / 100)] == FACTORY_WALL:
         Array = [
             { 'ID': 'key', 'IMAGE': KEY_IMAGE }
         ]
@@ -257,17 +257,22 @@ for IDX in range(0, 100):
 
 for Y, ROW in enumerate(Factory.MAP_ARRAY):
     for X, TILE in enumerate(ROW):
+        if TILE == 0:
+            rand = random.randrange(0, 50)
+            if rand == 1: Factory.MAP_ARRAY[Y][X] = FACTORY_WEB1
+            if rand == 2: Factory.MAP_ARRAY[Y][X] = FACTORY_WEB2
+
         if TILE == FACTORY_DOOR:
             Factory.MAP_ARRAY[Y][X] = 0
 
             # 문
-            if Factory.MAP_ARRAY[Y][X - 1] == 1 and Factory.MAP_ARRAY[Y][X + 1] == 1: IMAGE = DOOR_IMAGE
+            if Factory.MAP_ARRAY[Y][X - 1] == FACTORY_WALL and Factory.MAP_ARRAY[Y][X + 1] == FACTORY_WALL: IMAGE = DOOR_IMAGE
             else: IMAGE = DOOR_2_IMAGE
                 
             Door = Sprite(SPRITE_ID='door', TYPE='door', DISPLAY_NAME='door', FRONT_IMAGE=IMAGE, BACK_IMAGE=IMAGE, LEFT_IMAGE=IMAGE, RIGHT_IMAGE=IMAGE, FRONT_WALK_IMAGE=IMAGE, BACK_WALK_IMAGE=IMAGE, LEFT_WALK_IMAGE=IMAGE, RIGHT_WALK_IMAGE=IMAGE)
             Door.map_to(FIRST=True, MAP_ID=Factory.MAP_ID)
             Door.teleport(X * 100, Y * 100)
-            Door.LOCKED = True if random.randrange(0, 4) == 0 else False
+            Door.LOCKED = True if random.randrange(0, 5) == 0 else False
 
 # 플레이어
 Player = Sprite(SPRITE_ID='player', TYPE='player', DISPLAY_NAME='player', FRONT_IMAGE=PLAYER_FRONT_IMAGE, BACK_IMAGE=PLAYER_BACK_IMAGE, LEFT_IMAGE=PLAYER_LEFT_IMAGE, RIGHT_IMAGE=PLAYER_RIGHT_IMAGE, FRONT_WALK_IMAGE=PLAYER_FRONT_WALK_IMAGE, BACK_WALK_IMAGE=PLAYER_BACK_WALK_IMAGE, LEFT_WALK_IMAGE=PLAYER_LEFT_WALK_IMAGE, RIGHT_WALK_IMAGE=PLAYER_RIGHT_WALK_IMAGE)
