@@ -1,2 +1,2 @@
-pyinstaller -w -F --windowed --icon=./icon.ico main.py
+pyinstaller -w -F --windowed --icon=./images/icon.ico main.py
 find ./ -name ._\* -delete
