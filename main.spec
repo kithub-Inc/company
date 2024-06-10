@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['main.py'],
+    ['main.py', 'images.py', 'sounds.py],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('./images/*', './images'), ('./fonts/*', './fonts'), ('./sounds/*', './sounds')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -29,17 +29,11 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['images/icon.ico'],
-)
-app = BUNDLE(
-    exe,
-    name='main.app',
-    icon='./images/icon.ico',
-    bundle_identifier=None,
+    icon=['images\\icon.ico'],
 )
