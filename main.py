@@ -7,6 +7,7 @@ import sys
 import time
 import uuid
 import asyncio
+import json
 from threading import Timer
 from functools import reduce
 
@@ -24,6 +25,24 @@ CONFIG = {
     'MASTER_SOUND': 1, # 최대 사운드
     'MIXING': False # 사운드 조절중 여부
 }
+
+# 볼륨 믹서
+def mixing():
+    for SOUND in SOUNDS:
+        SOUND.set_volume(CONFIG['MASTER_SOUND'])
+
+with open('data/config.json') as config:
+    CONFIG = json.load(config)
+    CONFIG['SCREEN_WIDTH'] = pyautogui.size()[0]
+    CONFIG['SCREEN_HEIGHT'] = pyautogui.size()[1]
+    config.close()
+    
+    mixing()
+
+def save_config():
+    with open('data/config.json', 'w') as config:
+        json.dump(CONFIG, config)
+        config.close()
 
 # 초기화
 pygame.init()
@@ -66,6 +85,9 @@ INGAME = {
     'CAMERA_Y': 0, # 카메라 포지션 y
     'CHARGING': False, # 충전중 여부
     'SAVES': [], # 저장된 아이템들
+    'SAVE_ANIMATION': False, # 저장된 아이템 애니메이션 여부
+    'SAVE_ANIMATION_Y': 0, # 저장된 아이템 애니메이션 y
+    'SAVE_ITEM': None, # 저장된 아이템
     'SURVIVAL_RESULT': False, # 생존 결과 표시중 여부
     'QUOTA_RESULT': False, # 할당량 결과 표시중 여부
     'DAY_RESULT': False, # 마감일 결과 표시중 여부
@@ -78,10 +100,71 @@ INGAME = {
     'FIRE': False, # 해고 여부
     'FIRE_MESSAGE': False, # 해고 메시지 표시중 여부
     'FIRE_BUTTON': False, # 해고 버튼 표시중 여부
+    'FIRE_BUTTON_RECT': (0, 0, 0, 0), # 해고 버튼 위치
     'FIRE_MESSAGE_IDX': 0, # 해고 메시지 인덱스
     'MIDNIGHT_MESSAGE': False, # 자정 메시지 표시중 여부
     'MIDNIGHT_RUN_MESSAGE': False, # 자정 출발 메시지 표시중 여부
 }
+
+ITEM_ARRAY = [
+    # { 'ID': 'spear', 'DISPLAY_NAME': '응민이의뭐든지뚫는창', 'IMAGE': SPEAR_IMAGE },
+
+    { 'ID': 'key', 'DISPLAY_NAME': '열쇠', 'IMAGE': KEY_IMAGE, 'PATH': 'images/item/key2.gif' },
+    { 'ID': 'stop', 'DISPLAY_NAME': '정지 표지판', 'IMAGE': STOP_IMAGE, 'PATH': 'images/item/stop.gif' },
+    { 'ID': 'airhorn', 'DISPLAY_NAME': '에어혼', 'IMAGE': AIRHORN_IMAGE, 'PATH': 'images/item/airhorn.gif' },
+    { 'ID': 'bigbolt', 'DISPLAY_NAME': '큰 나사', 'IMAGE': BIGBOLT_IMAGE, 'PATH': 'images/item/bigbolt.gif' },
+    { 'ID': 'clownhorn', 'DISPLAY_NAME': '광대 나팔', 'IMAGE': CLOWNHORN_IMAGE, 'PATH': 'images/item/clownhorn.gif' },
+    { 'ID': 'coffee mug', 'DISPLAY_NAME': '머그컵', 'IMAGE': COFFEE_MUG_IMAGE, 'PATH': 'images/item/coffee mug.gif' },
+    { 'ID': 'comedy', 'DISPLAY_NAME': '희극', 'IMAGE': COMEDY_IMAGE, 'PATH': 'images/item/comedy.gif' },
+    { 'ID': 'flask', 'DISPLAY_NAME': '플라스크', 'IMAGE': FLASK_IMAGE, 'PATH': 'images/item/flask.gif' },
+    { 'ID': 'giftbox', 'DISPLAY_NAME': '선물 상자', 'IMAGE': GIFTBOX_IMAGE, 'PATH': 'images/item/giftbox.gif' },
+    { 'ID': 'whoopie cushion', 'DISPLAY_NAME': '방귀 쿠션', 'IMAGE': WHOOPIE_CUSHION_IMAGE, 'PATH': 'images/item/whoopie_cushion.gif' },
+    { 'ID': 'cube', 'DISPLAY_NAME': '장난감 큐브', 'IMAGE': CUBE_IMAGE, 'PATH': 'images/item/cube.gif' },
+    { 'ID': 'toothpaste', 'DISPLAY_NAME': '치약', 'IMAGE': TOOTHPASTE_IMAGE, 'PATH': 'images/item/toothpaste.gif' },
+    { 'ID': 'kettle', 'DISPLAY_NAME': '찻주전자', 'IMAGE': KETTLE_IMAGE, 'PATH': 'images/item/kettle.gif' },
+    { 'ID': 'duck', 'DISPLAY_NAME': '고무 오리', 'IMAGE': DUCK_IMAGE, 'PATH': 'images/item/duck.gif' },
+    { 'ID': 'ring', 'DISPLAY_NAME': '약혼 반지', 'IMAGE': RING_IMAGE, 'PATH': 'images/item/ring.gif' },
+    { 'ID': 'soda', 'DISPLAY_NAME': '소다', 'IMAGE': SODA_IMAGE, 'PATH': 'images/item/soda.gif' },
+    { 'ID': 'plastic fish', 'DISPLAY_NAME': '플라스틱 물고기', 'IMAGE': PLASTIC_FISH_IMAGE, 'PATH': 'images/item/plastic_fish.gif' },
+    { 'ID': 'medicine', 'DISPLAY_NAME': '약통', 'IMAGE': MEDICINE_IMAGE, 'PATH': 'images/item/medicine.gif' },
+    { 'ID': 'homesick', 'DISPLAY_NAME': '향수병', 'IMAGE': HOMESICK_IMAGE, 'PATH': 'images/item/homesick.gif' },
+    { 'ID': 'reading glasses', 'DISPLAY_NAME': '돋보기', 'IMAGE': READING_GLASSES_IMAGE, 'PATH': 'images/item/reading_glasses.gif' },
+    { 'ID': 'ball seven', 'DISPLAY_NAME': '마법의 7번공', 'IMAGE': BALL_SEVEN_IMAGE, 'PATH': 'images/item/ball_seven.gif' },
+    { 'ID': 'hair dryer', 'DISPLAY_NAME': '헤어드라이기', 'IMAGE': HAIR_DRYER_IMAGE, 'PATH': 'images/item/hair_dryer.gif' },
+    { 'ID': 'hair comb', 'DISPLAY_NAME': '빗', 'IMAGE': HAIR_COMB_IMAGE, 'PATH': 'images/item/hair_comb.gif' },
+    { 'ID': 'golden cup', 'DISPLAY_NAME': '황금 컵', 'IMAGE': GOLDEN_CUP_IMAGE, 'PATH': 'images/item/golden_cup.gif' },
+    { 'ID': 'egg beater', 'DISPLAY_NAME': '달걀 거품기', 'IMAGE': EGG_BEATER_IMAGE, 'PATH': 'images/item/egg_beater.gif' },
+    { 'ID': 'brass bell', 'DISPLAY_NAME': '황동 종', 'IMAGE': BRASS_BELL_IMAGE, 'PATH': 'images/item/brass_bell.gif' }
+]
+
+ITEM_ARRAY_2 = [
+    { 'ID': 'flashlight', 'DISPLAY_NAME': '손전등', 'IMAGE': FLASHLIGHT_IMAGE, 'PATH': 'images/item/flashlight.gif' },
+    { 'ID': 'shovel', 'DISPLAY_NAME': '철제 삽', 'IMAGE': SHOVEL_IMAGE, 'PATH': 'images/item/shovel.gif' }
+]
+
+with open('data/ingame.json') as ingame:
+    INGAME = json.load(ingame)
+    ingame.close()
+
+def save_ingame():
+    with open('data/ingame.json', 'w') as ingame:
+        NEW_INGAME = {}
+
+        for KEY, VALUE in INGAME.items():
+            if KEY in ['SCENES', 'SPRITES', 'MAPS', 'STORE', 'VISIBLE_TILES']: NEW_INGAME[KEY] = []
+            elif KEY in ['SAVE_ITEM', 'PREV_HOVER']: NEW_INGAME[KEY] = None
+            elif KEY == 'RECT': NEW_INGAME[KEY] = (VALUE.x, VALUE.y, VALUE.width, VALUE.height)
+            elif KEY == 'RUNNING': NEW_INGAME[KEY] = True
+            elif KEY in ['PREV_SCENE', 'CUR_SCENE']: NEW_INGAME[KEY] = ''
+            elif KEY in 'CUR_MOD': NEW_INGAME[KEY] = 'READY'
+            elif KEY == 'SAVES':
+                NEW_SAVES = []
+                for ITEM in VALUE: NEW_SAVES.append({ 'UUID': ITEM.UUID.hex, 'ID': ITEM.ID, 'RECT': (ITEM.RECT[0], ITEM.RECT[1], CONFIG['TILE_SIZE'], CONFIG['TILE_SIZE']), 'PRICE': ITEM.PRICE })
+                NEW_INGAME[KEY] = NEW_SAVES
+            else: NEW_INGAME[KEY] = VALUE
+
+        json.dump(NEW_INGAME, ingame)
+        ingame.close()
 
 # 스프라이트 객체
 class Sprite(pygame.sprite.Sprite):
@@ -108,7 +191,7 @@ class Sprite(pygame.sprite.Sprite):
         self.DIED = False # 사망 여부
         self.DAMAGE = 3 # 공격 대미지
         self.DISTANCE = 5 * CONFIG['TILE_SIZE'] # 넓은 원형 경계 (대부분 추적용)
-        self.ATTACK_DISTANCE = CONFIG['TILE_SIZE'] / 2 # 좁은 원형 경계 (공격용)
+        self.ATTACK_DISTANCE = .75 * CONFIG['TILE_SIZE'] # 좁은 원형 경계 (공격용)
         self.INTERACTION_DISTANCE = 1.5 * CONFIG['TILE_SIZE'] # 좁은 원형 경계 (상호작용)
         self.TRACK = False # 추적
         self.GUAGE = 100 # 게이지
@@ -273,6 +356,7 @@ class Sprite(pygame.sprite.Sprite):
         elif CUR_ITEM.ID == 'golden cup': SOUND = DROP_PLASTIC
         elif CUR_ITEM.ID == 'egg beater': SOUND = DROP_PLASTIC
         elif CUR_ITEM.ID == 'brass bell': SOUND = DROP_BELL
+        else: SOUND = DROP_PLASTIC
         VOLUME = get_sound_volume(self.RECT)
         SOUND.set_volume(VOLUME)
         SOUND.play()
@@ -350,11 +434,6 @@ class Interface:
         TO_SCENE_IDX = SCENE_REDUCED.index(SCENE_ID)
 
         INGAME['SCENES'][TO_SCENE_IDX]['INTERFACES'].append(self)
-
-# 볼륨 믹서
-def mixing():
-    for SOUND in SOUNDS:
-        SOUND.set_volume(CONFIG['MASTER_SOUND'])
 
 # FOV 계산
 def is_in_bounds(X, Y):
@@ -482,7 +561,7 @@ Open2.teleport(12 * CONFIG['TILE_SIZE'], 21 * CONFIG['TILE_SIZE'])
 
 # 공장 맵
 OUTPUT = generate_map('images/map/factory.png')
-FactoryArray = OUTPUT[0]
+FactoryArray = OUTPUT[0].copy()
 Factory = Map('factory', 'factory', FactoryArray)
 
 # 문 생성
@@ -556,6 +635,24 @@ Player.teleport(3 * CONFIG['TILE_SIZE'], 3 * CONFIG['TILE_SIZE'])
 Player.DISTANCE = (CONFIG['SCREEN_WIDTH'] / 2) + 3 * CONFIG['TILE_SIZE']
 Player.ATTACK_DISTANCE = 1.5 * CONFIG['TILE_SIZE']
 if CONFIG['DEBUG']: Player.INVINCIBILITY = True
+
+# 저장된 아이템 불러오기
+NEW_SAVES = []
+for ITEM in INGAME['SAVES']:
+    OBJECT_1 = [OBJECT for OBJECT in ITEM_ARRAY if OBJECT['ID'] == ITEM['ID']]
+    OBJECT_2 = [OBJECT for OBJECT in ITEM_ARRAY_2 if OBJECT['ID'] == ITEM['ID']]
+    if OBJECT_1: OBJECT = OBJECT_1[0]
+    else: OBJECT = OBJECT_2[0]
+    IMAGE = gif_pygame.load(OBJECT['PATH'])
+    gif_pygame.transform.scale(IMAGE, (1 * CONFIG['TILE_SIZE'], 1 * CONFIG['TILE_SIZE']))
+    
+    Item = Sprite(OBJECT['ID'], 'item', OBJECT['DISPLAY_NAME'], IMAGE, IMAGE, IMAGE, IMAGE, IMAGE, IMAGE, IMAGE, IMAGE)
+    Item.map_to(True, Ship.MAP_ID)
+    Item.teleport(ITEM['RECT'][0], ITEM['RECT'][1])
+    Item.PRICE = ITEM['PRICE']
+
+    NEW_SAVES.append(Item)
+INGAME['SAVES'] = NEW_SAVES
 
 # 플레이어 걷는 소리 재생
 def player_walk_sound():
@@ -744,7 +841,7 @@ def setting_event():
             INTERFACE.INTERFACE_HOVER = False
             if RECT.collidepoint(event.pos):
                 CONFIG['MIXING'] = True
-                CONFIG['MASTER_SOUND'] = (event.pos[0] - 200) * 0.01
+                CONFIG['MASTER_SOUND'] = (event.pos[0] - 200) * .01
                 mixing()
             
             RECT = pygame.Rect(200, 300, 250, 80)
@@ -752,6 +849,7 @@ def setting_event():
             if RECT.collidepoint(event.pos):
                 CONFIG['DEBUG'] = not CONFIG['DEBUG']
                 Player.INVINCIBILITY = not Player.INVINCIBILITY
+                save_config()
             
             RECT = pygame.Rect(290, 590, 120, 60)
 
@@ -763,7 +861,7 @@ def setting_event():
 
             if CONFIG['MIXING']:
                 if RECT.collidepoint(event.pos):
-                    CONFIG['MASTER_SOUND'] = (event.pos[0] - 200) * 0.01
+                    CONFIG['MASTER_SOUND'] = (event.pos[0] - 200) * .01
                     mixing()
             
             else:
@@ -784,7 +882,9 @@ def setting_event():
             if CONFIG['MIXING']:
                 if RECT.collidepoint(event.pos):
                     CONFIG['MIXING'] = False
-                    CONFIG['MASTER_SOUND'] = (event.pos[0] - 200) * 0.01
+                    CONFIG['MASTER_SOUND'] = (event.pos[0] - 200) * .01
+
+                    save_config()
                     mixing()
             
             else:
@@ -811,11 +911,11 @@ def use_interval():
     set_interval(increase_time, 3)
 
 def take_off():
-    SHIP = INGAME['MAPS'][Map.reduced('ID').index('ship')]
     for ITEM in INGAME['SAVES']:
-        ITEM.RECT.x -= get_ship_rect().x
-        ITEM.RECT.y -= get_ship_rect().y
-        SHIP['OBJECTS'].append(ITEM)
+        RECT_X = ITEM.RECT.x - get_ship_rect().x
+        RECT_Y = ITEM.RECT.y - get_ship_rect().y
+        ITEM.map_to(False, Ship.MAP_ID)
+        ITEM.teleport(RECT_X, RECT_Y)
     
     if INGAME['CUR_MAP'] == 'experimentation':
         NOISE_2.stop()
@@ -861,9 +961,9 @@ def take_off():
                 Timer(4, day_result_false).start()
         Timer(5, survival_result_false).start()
     
-    INGAME['HELP'] = f"""현금: ${INGAME['MONEY']}
+    INGAME['HELP'] = f'''현금: ${INGAME['MONEY']}
     
-    함선이 이륙합니다."""
+    함선이 이륙합니다.'''
 
     NOISE_2.play()
 
@@ -899,7 +999,7 @@ def enter_terminal(event):
         # 커맨드
         elif event.key == pygame.K_RETURN:
             if INGAME['COMMAND'] == 'moons':
-                INGAME['HELP'] = f"""현금: ${INGAME['MONEY']}
+                INGAME['HELP'] = f'''현금: ${INGAME['MONEY']}
 
                 > experimentation
                 기본적인 행성 입니다.
@@ -908,10 +1008,10 @@ def enter_terminal(event):
                 회사 건물 입니다. 날이 차감되지 않으며
                 아이템을 팔 수 있습니다.
                 
-                예시) > company"""
+                예시) > company'''
 
             elif INGAME['COMMAND'] == 'store':
-                INGAME['HELP'] = f"""현금: ${INGAME['MONEY']}
+                INGAME['HELP'] = f'''현금: ${INGAME['MONEY']}
                 
                 > flashlight
                 프로 손전등 입니다. f키로 킬 수 있습니다.
@@ -919,32 +1019,32 @@ def enter_terminal(event):
                 > shovel
                 철제 삽 입니다. r키로 공격할 수 있습니다.
                 
-                예시) > flashlight"""
+                예시) > flashlight'''
 
             elif INGAME['COMMAND'] in ['flashlight', 'shovel']:
                 if INGAME['MONEY'] - 25 <= 0:
-                    INGAME['HELP'] = f"""현금: ${INGAME['MONEY']}
+                    INGAME['HELP'] = f'''현금: ${INGAME['MONEY']}
                     
-                    현금이 모자랍니다."""
+                    현금이 모자랍니다.'''
 
                     TERMINAL_ERROR.play()
 
                 else:
                     DISPLAY_NAME = '철제 삽' if INGAME['COMMAND'] == 'shovel' else '손전등'
                     INGAME['MONEY'] -= 25 if INGAME['COMMAND'] == 'flashlight' else 30
-                    INGAME['HELP'] = f"""현금: ${INGAME['MONEY']}
+                    INGAME['HELP'] = f'''현금: ${INGAME['MONEY']}
 
-                    {DISPLAY_NAME} 1개를 주문했습니다."""
+                    {DISPLAY_NAME} 1개를 주문했습니다.'''
                     INGAME['STORE'].append({ 'ID': INGAME['COMMAND'], 'DISPLAY_NAME': DISPLAY_NAME, 'IMAGE': SHOVEL_IMAGE if INGAME['COMMAND'] == 'shovel' else FLASHLIGHT_IMAGE })
 
                     PURCHASE_ITEM.play()
 
             elif INGAME['COMMAND'] in ['experimentation', 'company']:
                 if INGAME['CUR_MOD'] == 'READY':
-                    INGAME['HELP'] = f"""현금: ${INGAME['MONEY']}
+                    INGAME['HELP'] = f'''현금: ${INGAME['MONEY']}
                     
                     {INGAME['COMMAND']} 으로 함선이 이동했습니다.
-                    이동 비용은 $0원 입니다."""
+                    이동 비용은 $0원 입니다.'''
                     INGAME['NEXT_MAP'] = INGAME['COMMAND']
 
                     INTRO_MUSIC.stop()
@@ -955,31 +1055,23 @@ def enter_terminal(event):
                     Timer(4, arrive_play).start()
                 
                 else:
-                    INGAME['HELP'] = f"""현금: ${INGAME['MONEY']}
+                    INGAME['HELP'] = f'''현금: ${INGAME['MONEY']}
                     
-                    이륙한 다음에만 이동할 수 있습니다."""
+                    이륙한 다음에만 이동할 수 있습니다.'''
 
                     TERMINAL_ERROR.play()
             
             elif INGAME['COMMAND'] == 'land':
                 if INGAME['CUR_MOD'] == 'READY':
-                    CUR_MAP = INGAME['MAPS'][Map.reduced('ID').index(INGAME['NEXT_MAP'])]
-
-                    try:
-                        SHIP = INGAME['MAPS'][Map.reduced('ID').index('ship')]
-                        for ITEM in SHIP['OBJECTS']:
-                            if ITEM in INGAME['SAVES']:
-                                CUR_MAP['OBJECTS'].remove(ITEM)
-                    except: ...
-
                     for ITEM in INGAME['SAVES']:
-                        ITEM.RECT.x += get_ship_rect(INGAME['NEXT_MAP']).x
-                        ITEM.RECT.y += get_ship_rect(INGAME['NEXT_MAP']).y
-                        CUR_MAP['OBJECTS'].append(ITEM)
+                        RECT_X = ITEM.RECT.x + get_ship_rect(INGAME['NEXT_MAP']).x
+                        RECT_Y = ITEM.RECT.y + get_ship_rect(INGAME['NEXT_MAP']).y
+                        ITEM.map_to(False, INGAME['NEXT_MAP'])
+                        ITEM.teleport(RECT_X, RECT_Y)
                     
-                    INGAME['HELP'] = f"""현금: ${INGAME['MONEY']}
+                    INGAME['HELP'] = f'''현금: ${INGAME['MONEY']}
                     
-                    {INGAME['NEXT_MAP']}으로 함선이 착륙합니다."""
+                    {INGAME['NEXT_MAP']}으로 함선이 착륙합니다.'''
 
                     NEXT_MAP = None
                     if INGAME['NEXT_MAP'] == 'experimentation': NEXT_MAP = Experimentation
@@ -1011,35 +1103,7 @@ def enter_terminal(event):
                                     RECT_Y = random.randrange(1, OUTPUT[2])
 
                                     if not Factory.MAP_ARRAY[RECT_Y][RECT_X] == FACTORY_WALL and not OUTPUT[0][RECT_Y][RECT_X] == 2:
-                                        Array = [
-                                            { 'ID': 'key', 'DISPLAY_NAME': '열쇠', 'IMAGE': KEY_IMAGE },
-                                            { 'ID': 'stop', 'DISPLAY_NAME': '정지 표지판', 'IMAGE': STOP_IMAGE },
-                                            { 'ID': 'airhorn', 'DISPLAY_NAME': '에어혼', 'IMAGE': AIRHORN_IMAGE },
-                                            { 'ID': 'bigbolt', 'DISPLAY_NAME': '큰 나사', 'IMAGE': BIGBOLT_IMAGE },
-                                            { 'ID': 'clownhorn', 'DISPLAY_NAME': '광대 나팔', 'IMAGE': CLOWNHORN_IMAGE },
-                                            { 'ID': 'coffee mug', 'DISPLAY_NAME': '머그컵', 'IMAGE': COFFEE_MUG_IMAGE },
-                                            { 'ID': 'comedy', 'DISPLAY_NAME': '희극', 'IMAGE': COMEDY_IMAGE },
-                                            { 'ID': 'flask', 'DISPLAY_NAME': '플라스크', 'IMAGE': FLASK_IMAGE },
-                                            { 'ID': 'giftbox', 'DISPLAY_NAME': '선물 상자', 'IMAGE': GIFTBOX_IMAGE },
-                                            { 'ID': 'whoopie cushion', 'DISPLAY_NAME': '방귀 쿠션', 'IMAGE': WHOOPIE_CUSHION_IMAGE },
-                                            { 'ID': 'cube', 'DISPLAY_NAME': '장난감 큐브', 'IMAGE': CUBE_IMAGE },
-                                            { 'ID': 'toothpaste', 'DISPLAY_NAME': '치약', 'IMAGE': TOOTHPASTE_IMAGE },
-                                            { 'ID': 'kettle', 'DISPLAY_NAME': '찻주전자', 'IMAGE': KETTLE_IMAGE },
-                                            { 'ID': 'duck', 'DISPLAY_NAME': '장난감 오리', 'IMAGE': DUCK_IMAGE },
-                                            { 'ID': 'ring', 'DISPLAY_NAME': '약혼 반지', 'IMAGE': RING_IMAGE },
-                                            { 'ID': 'soda', 'DISPLAY_NAME': '소다', 'IMAGE': SODA_IMAGE },
-                                            { 'ID': 'plastic fish', 'DISPLAY_NAME': '플라스틱 물고기', 'IMAGE': PLASTIC_FISH_IMAGE },
-                                            { 'ID': 'medicine', 'DISPLAY_NAME': '약통', 'IMAGE': MEDICINE_IMAGE },
-                                            { 'ID': 'homesick', 'DISPLAY_NAME': '향수병', 'IMAGE': HOMESICK_IMAGE },
-                                            { 'ID': 'reading glasses', 'DISPLAY_NAME': '돋보기', 'IMAGE': READING_GLASSES_IMAGE },
-                                            { 'ID': 'ball seven', 'DISPLAY_NAME': '마법의 7번공', 'IMAGE': BALL_SEVEN_IMAGE },
-                                            { 'ID': 'hair dryer', 'DISPLAY_NAME': '헤어드라이기', 'IMAGE': HAIR_DRYER_IMAGE },
-                                            { 'ID': 'hair comb', 'DISPLAY_NAME': '빗', 'IMAGE': HAIR_COMB_IMAGE },
-                                            { 'ID': 'golden cup', 'DISPLAY_NAME': '황금 컵', 'IMAGE': GOLDEN_CUP_IMAGE },
-                                            { 'ID': 'egg beater', 'DISPLAY_NAME': '달걀 거품기', 'IMAGE': EGG_BEATER_IMAGE },
-                                            { 'ID': 'brass bell', 'DISPLAY_NAME': '황동 종', 'IMAGE': BRASS_BELL_IMAGE }
-                                        ]
-                                        ITEM = Array[random.randrange(len(Array))]
+                                        ITEM = ITEM_ARRAY[random.randrange(len(ITEM_ARRAY))]
 
                                         Item = Sprite(ITEM['ID'], 'item', ITEM['DISPLAY_NAME'], ITEM['IMAGE'], ITEM['IMAGE'], ITEM['IMAGE'], ITEM['IMAGE'], ITEM['IMAGE'], ITEM['IMAGE'], ITEM['IMAGE'], ITEM['IMAGE'])
                                         Item.map_to(True, Factory.MAP_ID)
@@ -1056,15 +1120,15 @@ def enter_terminal(event):
                                 MINE_COUNT = 4
 
                                 if INGAME['DIFFICULTY'] == '일식':
-                                    HOARDING_BUG_COUNT = 4
+                                    HOARDING_BUG_COUNT = 3
                                     COILHEAD_COUNT = 2
                                     BRACKEN_COUNT = 1
                                     JESTER_COUNT = 1
                                     GIRL_COUNT = 1
-                                    MASK_COUNT = 3
+                                    MASK_COUNT = 2
                                     MINE_COUNT = 12
 
-                                for _ in range(0, 50):
+                                for _ in range(0, HOARDING_BUG_COUNT + COILHEAD_COUNT + BRACKEN_COUNT + JESTER_COUNT + GIRL_COUNT + MASK_COUNT + MINE_COUNT + 1):
                                     RECT_X = random.randrange(7, OUTPUT[1])
                                     RECT_Y = random.randrange(7, OUTPUT[2])
 
@@ -1188,9 +1252,9 @@ def enter_terminal(event):
                     Timer(.5, run).start()
                 
                 else:
-                    INGAME['HELP'] = f"""현금: ${INGAME['MONEY']}
+                    INGAME['HELP'] = f'''현금: ${INGAME['MONEY']}
                     
-                    함선이 이동한 다음에만 착륙할 수 있습니다."""
+                    함선이 이동한 다음에만 착륙할 수 있습니다.'''
 
                     TERMINAL_ERROR.play()
             
@@ -1199,23 +1263,23 @@ def enter_terminal(event):
                     take_off()
                 
                 else:
-                    INGAME['HELP'] = f"""현금: ${INGAME['MONEY']}
+                    INGAME['HELP'] = f'''현금: ${INGAME['MONEY']}
                     
-                    착륙한 후에만 이륙할 수 있습니다."""
+                    착륙한 후에만 이륙할 수 있습니다.'''
 
                     TERMINAL_ERROR.play()
 
             else:
-                INGAME['HELP'] = f"""현금: ${INGAME['MONEY']}
+                INGAME['HELP'] = f'''현금: ${INGAME['MONEY']}
                 
-                알 수 없는 명령어 \'{INGAME['COMMAND']}\'."""
+                알 수 없는 명령어 \'{INGAME['COMMAND']}\'.'''
 
                 TERMINAL_ERROR.play()
 
             INGAME['COMMAND'] = ''
         
         # 입력 제한
-        elif len(INGAME['COMMAND']) <= 30:
+        elif len(INGAME['COMMAND']) <= 30 and len(pygame.key.name(event.key)) == 1:
             INGAME['COMMAND'] += str(pygame.key.name(event.key))
 
 def enter_ingame(event):
@@ -1253,12 +1317,14 @@ def enter_ingame(event):
                                 if MONSTER.HP < 0:
                                     if len(MONSTER.INVENTORY) > 0: MONSTER.drop_item(MONSTER.INVENTORY[0])
                                     CUR_MAP['OBJECTS'].remove(MONSTER)
+
+                                    if MONSTER.ID == 'bracken': BRACKEN_ANGRY.stop()
     
     # e키 상호작용
     if event.type == pygame.KEYDOWN and event.key == pygame.K_e and Player.CONTAIN:
         # 터미널 초기화
         if Player.CONTAIN.TYPE == 'terminal':
-            INGAME['HELP'] = f"""현금: ${INGAME['MONEY']}
+            INGAME['HELP'] = f'''현금: ${INGAME['MONEY']}
             
             > MOONS
             행성 목록을 보여줍니다.
@@ -1272,7 +1338,7 @@ def enter_ingame(event):
             함선이 지정된 행성으로 착륙합니다.
             
             > TAKE-OFF
-            함선이 이륙합니다."""
+            함선이 이륙합니다.'''
 
             ENTER_TERMINAL.play()
             Player.WALKING = False
@@ -1403,7 +1469,7 @@ def enter_ingame(event):
                 CUR_ITEM = Player.INVENTORY[Player.CUR_ITEM_IDX]
                 Player.drop_item(CUR_ITEM)
                 CUR_ITEM_EXISTS = False
-                CUR_ITEM.RECT.x = 49 * CONFIG['TILE_SIZE'] + random.randrange(0, .75 * CONFIG['TILE_SIZE'])
+                CUR_ITEM.RECT.x = 49 * CONFIG['TILE_SIZE'] + random.randrange(0, 1 * CONFIG['TILE_SIZE'])
                 CUR_ITEM.RECT.y = 51 * CONFIG['TILE_SIZE'] + random.randrange(0, 1 * CONFIG['TILE_SIZE'])
                 CUR_ITEM.TYPE = 'sold'
 
@@ -1423,7 +1489,8 @@ def enter_ingame(event):
         # 아이템 수집
         elif len(Player.INVENTORY) < 8:
             # 플레이어가 함선 안에 있는지
-            if is_ship() and get_ship_rect().collidepoint(Player.CONTAIN.RECT.x, Player.CONTAIN.RECT.y): INGAME['SAVES'].remove(Player.CONTAIN)
+            if is_ship() and get_ship_rect().collidepoint(Player.CONTAIN.RECT.x, Player.CONTAIN.RECT.y):
+                INGAME['SAVES'].remove(Player.CONTAIN)
 
             Player.grab_item()
 
@@ -1439,7 +1506,18 @@ def enter_ingame(event):
                     CUR_ITEM_EXISTS = False
                 
                 # 플레이어가 함선 안에 있는지
-                if is_ship() and get_ship_rect().collidepoint(CUR_ITEM.RECT.x, CUR_ITEM.RECT.y): INGAME['SAVES'].append(CUR_ITEM)
+                if is_ship() and get_ship_rect().collidepoint(CUR_ITEM.RECT.x, CUR_ITEM.RECT.y):
+                    INGAME['SAVES'].append(CUR_ITEM)
+
+                    INGAME['SAVE_ANIMATION'] = True
+                    INGAME['SAVE_ANIMATION_Y'] = 0
+                    INGAME['SAVE_ITEM'] = { 'UUID': CUR_ITEM.UUID, 'DISPLAY_NAME': CUR_ITEM.DISPLAY_NAME, 'IMAGE': CUR_ITEM.CUR_IMAGE }
+
+                    SAVE_ITEM_SFX.play()
+
+                    def animation_false(SAVE_ITEM):
+                        if INGAME['SAVE_ITEM'] == SAVE_ITEM: INGAME['SAVE_ANIMATION'] = False
+                    Timer(2, animation_false, (INGAME['SAVE_ITEM'],)).start()
     
     # f키 손전등
     if event.type == pygame.KEYDOWN and event.key == pygame.K_f:
@@ -1471,9 +1549,33 @@ def enter_ingame(event):
         CUR_ITEM_EXISTS = len(Player.INVENTORY) > Player.CUR_ITEM_IDX
 
 def ingame_event():
+    global CUR_ITEM_EXISTS, INGAME
+
     for event in pygame.event.get():
         # 종료
-        if event.type == pygame.QUIT: INGAME['RUNNING'] = False
+        if event.type == pygame.QUIT:
+            INGAME['RUNNING'] = False
+
+            if INGAME['CUR_MOD'] == 'READY' and not INGAME['SURVIVAL_RESULT'] and not INGAME['QUOTA_RESULT'] and not INGAME['DAY_RESULT']:
+                CUR_ITEM_EXISTS = False
+                WILL_DROP = []
+                for CUR_ITEM in Player.INVENTORY:
+                    WILL_DROP.append(CUR_ITEM)
+                
+                for ITEM in WILL_DROP:
+                    INGAME['SAVES'].append(ITEM)
+                    Player.drop_item(ITEM)
+                
+                save_ingame()
+        
+        # 다시하기 버튼 클릭
+        if event.type == pygame.MOUSEBUTTONUP:
+            if pygame.Rect(INGAME['FIRE_BUTTON_RECT'][0], INGAME['FIRE_BUTTON_RECT'][1], INGAME['FIRE_BUTTON_RECT'][2], INGAME['FIRE_BUTTON_RECT'][3]).collidepoint(pygame.mouse.get_pos()):
+                with open('data/origin_ingame.json') as ingame:
+                    INGAME = json.load(ingame)
+                    save_ingame()
+                    INGAME['RUNNING'] = False
+                    ingame.close()
 
         # 플레이어가 살아있을 때
         if not Player.DIED:
@@ -1554,7 +1656,7 @@ def draw_scan(dist):
             # 정보
             text_ = font.render(OBJECT.DISPLAY_NAME, True, (0, 0, 0))
             screen.blit(text_, (OBJECT_RECT.x + 150, OBJECT_RECT.y - 25))
-            text_ = font.render(f"${str(OBJECT.PRICE)}", True, (0, 0, 0))
+            text_ = font.render(f'${str(OBJECT.PRICE)}', True, (0, 0, 0))
             screen.blit(text_, (OBJECT_RECT.x + 150, OBJECT_RECT.y))
 
             # 합계
@@ -1563,7 +1665,7 @@ def draw_scan(dist):
                 dist = distance(Player.RECT, ITEM.RECT)
                 if ITEM.TYPE == 'item' and dist < Player.DISTANCE: SUM += ITEM.PRICE
             
-            sum_text = font.render(f"합계: ${str(SUM)}", True, (255, 255, 255))
+            sum_text = font.render(f'합계: ${str(SUM)}', True, (255, 255, 255))
         
         if OBJECT.TYPE == 'monster' and not OBJECT.ID == 'girl':
             pygame.draw.circle(screen, (150, 31, 27), (OBJECT_RECT.x + 50, OBJECT_RECT.y + 50), 75, 1)
@@ -1599,14 +1701,14 @@ def draw_situation():
         # 마감일 표시
         pygame.draw.rect(screen, (255, 255, 255), (CONFIG['SCREEN_WIDTH'] - 400, 50, 100, 100), 1)
         text_ = font.render('마감일', True, (255, 255, 255))
-        text2_ = font.render(f"{INGAME['DAY']}일", True, (255, 255, 255))
+        text2_ = font.render(f'{INGAME['DAY']}일', True, (255, 255, 255))
         screen.blit(text_, (CONFIG['SCREEN_WIDTH'] - 375, 70))
         screen.blit(text2_, (CONFIG['SCREEN_WIDTH'] - 375, 100))
     
         # 할당량 표시
         pygame.draw.rect(screen, (255, 255, 255), (CONFIG['SCREEN_WIDTH'] - 250, 50, 200, 100), 1)
         text_ = font.render('수익 할당량', True, (255, 255, 255))
-        text2_ = font.render(f"${INGAME['QUOTA']} / ${INGAME['TARGET_QUOTA']}", True, (255, 255, 255))
+        text2_ = font.render(f'${INGAME['QUOTA']} / ${INGAME['TARGET_QUOTA']}', True, (255, 255, 255))
         screen.blit(text_, (CONFIG['SCREEN_WIDTH'] - 220, 70))
         screen.blit(text2_, (CONFIG['SCREEN_WIDTH'] - 220, 100))
     
@@ -1615,9 +1717,9 @@ def draw_situation():
         HOURS = int(INGAME['TIME'] / 60)
         MINUTES = int(INGAME['TIME'] % 60)
         APM = '오전' if HOURS < 12 else '오후'
-        DISPLAY_HOURS = f"0{str(HOURS)}" if HOURS < 10 else str(HOURS)
-        DISPLAY_MINUTES = f"0{str(MINUTES)}" if MINUTES < 10 else str(MINUTES)
-        text = font.render(f"{APM} {str(DISPLAY_HOURS)}:{str(DISPLAY_MINUTES)}", True, (255, 255, 255))
+        DISPLAY_HOURS = f'0{str(HOURS)}' if HOURS < 10 else str(HOURS)
+        DISPLAY_MINUTES = f'0{str(MINUTES)}' if MINUTES < 10 else str(MINUTES)
+        text = font.render(f'{APM} {str(DISPLAY_HOURS)}:{str(DISPLAY_MINUTES)}', True, (255, 255, 255))
         screen.blit(text, (50, 50))
     
     if INGAME['SURVIVAL_RESULT']:
@@ -1632,33 +1734,43 @@ def draw_situation():
     if INGAME['DAY_RESULT']:
         pygame.draw.rect(screen, (150, 31, 27), ((CONFIG['SCREEN_WIDTH'] // 2) - 450, CONFIG['SCREEN_HEIGHT'] // 2 - 150, 900, 300))
         
-        text = font3.render(f"{INGAME['DAY']}일 남음", True, (255, 255, 255))
+        text = font3.render(f'{INGAME['DAY']}일 남음', True, (255, 255, 255))
         screen.blit(text, ((CONFIG['SCREEN_WIDTH'] // 2) - (text.get_size()[0] / 2), CONFIG['SCREEN_HEIGHT'] // 2 - (text.get_size()[1] / 2) - 20))
         
-        text = font2.render(f"{INGAME['DAY']} days left", True, (255, 255, 255))
+        text = font2.render(f'{INGAME['DAY']} days left', True, (255, 255, 255))
         screen.blit(text, ((CONFIG['SCREEN_WIDTH'] // 2) - (text.get_size()[0] / 2), CONFIG['SCREEN_HEIGHT'] // 2 - (text.get_size()[1] / 2) + 60))
     
     if INGAME['QUOTA_RESULT']:
         pygame.draw.rect(screen, (150, 31, 27), ((CONFIG['SCREEN_WIDTH'] // 2) - 450, CONFIG['SCREEN_HEIGHT'] // 2 - 150, 900, 300))
         
-        text = font3.render(f"다음 할당량: ${INGAME['TARGET_QUOTA']}", True, (255, 255, 255))
+        text = font3.render(f'다음 할당량: ${INGAME['TARGET_QUOTA']}', True, (255, 255, 255))
         screen.blit(text, ((CONFIG['SCREEN_WIDTH'] // 2) - (text.get_size()[0] / 2), CONFIG['SCREEN_HEIGHT'] // 2 - (text.get_size()[1] / 2)))
     
     if INGAME['MIDNIGHT_MESSAGE']:
         pygame.draw.rect(screen, (150, 31, 27), (CONFIG['SCREEN_WIDTH'] - 500, CONFIG['SCREEN_HEIGHT'] - 400, 400, 125))
         
-        text = font2.render(f"자정에 함선이 떠나니", True, (255, 255, 255))
+        text = font2.render(f'자정에 함선이 떠나니', True, (255, 255, 255))
         screen.blit(text, (CONFIG['SCREEN_WIDTH'] - 500 + 25, CONFIG['SCREEN_HEIGHT'] - 400 + 25))
-        text = font2.render(f"빠른 복귀 부탁드립니다.", True, (255, 255, 255))
+        text = font2.render(f'빠른 복귀 부탁드립니다.', True, (255, 255, 255))
         screen.blit(text, (CONFIG['SCREEN_WIDTH'] - 500 + 25, CONFIG['SCREEN_HEIGHT'] - 400 + 65))
     
     if INGAME['MIDNIGHT_RUN_MESSAGE']:
         pygame.draw.rect(screen, (150, 31, 27), (CONFIG['SCREEN_WIDTH'] - 500, CONFIG['SCREEN_HEIGHT'] - 400, 400, 125))
         
-        text = font2.render(f"자정이 되어 함선이", True, (255, 255, 255))
+        text = font2.render(f'자정이 되어 함선이', True, (255, 255, 255))
         screen.blit(text, (CONFIG['SCREEN_WIDTH'] - 500 + 25, CONFIG['SCREEN_HEIGHT'] - 400 + 25))
-        text = font2.render(f"출발하고 있습니다.", True, (255, 255, 255))
+        text = font2.render(f'출발하고 있습니다.', True, (255, 255, 255))
         screen.blit(text, (CONFIG['SCREEN_WIDTH'] - 500 + 25, CONFIG['SCREEN_HEIGHT'] - 400 + 65))
+    
+    if INGAME['SAVE_ANIMATION']:
+        if INGAME['SAVE_ANIMATION_Y'] < 100:
+            INGAME['SAVE_ANIMATION_Y'] += 2
+
+        pygame.draw.rect(screen, (150, 31, 27), (CONFIG['SCREEN_WIDTH'] - 300, CONFIG['SCREEN_HEIGHT'] - 200 - INGAME['SAVE_ANIMATION_Y'], 200, 200), 2)
+        INGAME['SAVE_ITEM']['IMAGE'].render(screen, (CONFIG['SCREEN_WIDTH'] - 250, CONFIG['SCREEN_HEIGHT'] - 150 - INGAME['SAVE_ANIMATION_Y']))
+
+        text = font.render(f'함선에 저장됨', True, (150, 31, 27))
+        screen.blit(text, (CONFIG['SCREEN_WIDTH'] - 255, CONFIG['SCREEN_HEIGHT'] + 10 - INGAME['SAVE_ANIMATION_Y']))
 
 def draw_player_detail():
     global CUR_ITEM_EXISTS
@@ -1708,7 +1820,7 @@ def draw_uiux():
             text = font.render(LINE.strip(), True, (0, 255, 0))
             screen.blit(text, (((CONFIG['SCREEN_WIDTH'] // 2) - 450) + 200, ((CONFIG['SCREEN_HEIGHT'] // 2) - 450) + 200 + IDX * 30))
         
-        text = font.render(f"> {INGAME['COMMAND']}", True, (0, 255, 0))
+        text = font.render(f'> {INGAME['COMMAND']}', True, (0, 255, 0))
         screen.blit(text, (((CONFIG['SCREEN_WIDTH'] // 2) - 450) + 200, ((CONFIG['SCREEN_HEIGHT'] // 2) - 450) + 700))
     
     # 로딩중이라면
@@ -1738,6 +1850,7 @@ def draw_uiux():
     if INGAME['FIRE_BUTTON']:
         text = font2.render('다시하기', True, (0, 0, 0))
         SURFACE_RECT = (100, CONFIG['SCREEN_HEIGHT'] - 100 - text.get_size()[1] + (10 * 2), text.get_size()[0] + (20 * 2), text.get_size()[1] + (10 * 2))
+        INGAME['FIRE_BUTTON_RECT'] = SURFACE_RECT
         SURFACE_COLOR = (255, 255, 255)
         SURFACE_RADIUS = 10
         pygame.draw.rect(screen, SURFACE_COLOR, (SURFACE_RECT[0] + SURFACE_RADIUS, SURFACE_RECT[1], SURFACE_RECT[2] - 2 * SURFACE_RADIUS, SURFACE_RECT[3]))
@@ -1872,13 +1985,13 @@ def player_movement():
                 if len(OBJECT.INVENTORY) == 8: shortcut = '(가득참)'
                 OBJECT.CONTAIN = ITEM
 
-                text = font.render(f"{shortcut} {ITEM.DISPLAY_NAME} 들기", True, (255, 255, 255))
+                text = font.render(f'{shortcut} {ITEM.DISPLAY_NAME} 들기', True, (255, 255, 255), (0, 0, 0))
                 break
 
             elif ITEM.TYPE == 'terminal':
                 OBJECT.CONTAIN = ITEM
 
-                text = font.render('(E) 터미널 사용하기', True, (255, 255, 255))
+                text = font.render('(E) 터미널 사용하기', True, (255, 255, 255), (0, 0, 0))
                 break
 
             elif ITEM.TYPE == 'door':
@@ -1890,25 +2003,25 @@ def player_movement():
                 message = '문 열기'
                 if ITEM.OPENED: message = '문 닫기'
                 
-                text = font.render(f"{shortcut} {message}", True, (255, 255, 255))
+                text = font.render(f'{shortcut} {message}', True, (255, 255, 255), (0, 0, 0))
                 break
 
             elif ITEM.TYPE == 'enter':
                 OBJECT.CONTAIN = ITEM
 
-                text = font.render('(E) 입장하기', True, (255, 255, 255))
+                text = font.render('(E) 입장하기', True, (255, 255, 255), (0, 0, 0))
                 break
 
             elif ITEM.TYPE == 'exit':
                 OBJECT.CONTAIN = ITEM
 
-                text = font.render('(E) 나가기', True, (255, 255, 255))
+                text = font.render('(E) 나가기', True, (255, 255, 255), (0, 0, 0))
                 break
 
             elif ITEM.TYPE == 'delivery':
                 OBJECT.CONTAIN = ITEM
 
-                text = font.render('(E) 열기', True, (255, 255, 255))
+                text = font.render('(E) 열기', True, (255, 255, 255), (0, 0, 0))
                 break
 
             elif ITEM.TYPE == 'charger':
@@ -1923,13 +2036,13 @@ def player_movement():
                     if CUR_ITEM.ID == 'flashlight':
                         message = '충전하기'
 
-                text = font.render(f"{shortcut} {message}", True, (255, 255, 255))
+                text = font.render(f'{shortcut} {message}', True, (255, 255, 255), (0, 0, 0))
                 break
 
             elif ITEM.TYPE == 'salemanager':
                 OBJECT.CONTAIN = ITEM
                 
-                text = font.render('(E) 올려두기', True, (255, 255, 255))
+                text = font.render('(E) 올려두기', True, (255, 255, 255), (0, 0, 0))
                 break
 
         else: OBJECT.CONTAIN = None
@@ -2026,7 +2139,7 @@ def track(callback=None):
         if CUR_NAVIGATE[0] * CONFIG['TILE_SIZE'] < OBJECT.RECT.y: OBJECT.move(0, -OBJECT.SPEED)
         
         if CUR_NAVIGATE == (int(OBJECT.RECT.y / CONFIG['TILE_SIZE']), int(OBJECT.RECT.x / CONFIG['TILE_SIZE'])):
-            if dist < Player.DISTANCE:
+            if distance(Player.RECT, OBJECT.RECT) < Player.DISTANCE and not OBJECT.TRANSPARENT:
                 if OBJECT.WALK_SOUND:
                     VOLUME = get_sound_volume(OBJECT.RECT)
                     OBJECT.WALK_SOUND.set_volume(VOLUME)
@@ -2246,9 +2359,6 @@ def monster_movement():
                 OBJECT.TIMER = False
                 OBJECT.START_TIME = 0
                 OBJECT.END_TIME = 0
-        
-        # 공격중이라면 플레이어를 추적 (astar)
-        if OBJECT.ANGRY: track()
 
         # 다왔다면
         if OBJECT.ANGRY and not OBJECT.TRACK and OBJECT.NAVIGATE and (int(OBJECT.RECT.y / CONFIG['TILE_SIZE']), int(OBJECT.RECT.x / CONFIG['TILE_SIZE'])) == OBJECT.NAVIGATE[len(OBJECT.NAVIGATE) - 1]: OBJECT.ALREADY_NAVIGATE = False
@@ -2258,10 +2368,13 @@ def monster_movement():
             if not OBJECT.NAVIGATE: OBJECT.TRACK = False
             else: OBJECT.NAVIGATE_IDX = 0
 
-        # 공격중이고, 플레이어가 브래켄의 attack distance안에 있다면 플레이어 목꺽기 (attack)
-        if OBJECT.ANGRY: attack()
-        
         if OBJECT.ANGRY:
+            # 공격중이라면 플레이어를 추적 (astar)
+            track()
+
+            # 공격중이고, 플레이어가 브래켄의 attack distance안에 있다면 플레이어 목꺽기 (attack)
+            attack()
+            
             VOLUME = get_sound_volume(OBJECT.RECT)
             BRACKEN_ANGRY.set_volume(VOLUME)
     
@@ -2347,14 +2460,16 @@ def monster_movement():
             if not OBJECT.NAVIGATE: OBJECT.NAVIGATE = astar(Factory.MAP_ARRAY, (int(OBJECT.RECT.y / CONFIG['TILE_SIZE']), int(OBJECT.RECT.x / CONFIG['TILE_SIZE'])), (3, 3))
             OBJECT.NAVIGATE_IDX = 0
 
-        # 변신이 끝나면 플레이어를 추적 (astar)
         if OBJECT.ANGRY:
+            # 변신이 끝나면 플레이어를 추적 (astar)
             track()
             OBJECT.CUR_IMAGE = JESTER_OPENED_WALK_IMAGE
 
-        # 발소리
-        if OBJECT.ANGRY:
+            # 발소리
             OBJECT.WALK_SOUND = random.choice([JESTER_WALK_1, JESTER_WALK_2, JESTER_WALK_3])
+
+            # 변신이 끝나고, 플레이어가 제스터의 attack distance안에 있다면 플레이어 먹기
+            attack()
 
         # 다왔다면
         if OBJECT.ANGRY and not OBJECT.TRACK and OBJECT.NAVIGATE and (int(OBJECT.RECT.y / CONFIG['TILE_SIZE']), int(OBJECT.RECT.x / CONFIG['TILE_SIZE'])) == OBJECT.NAVIGATE[len(OBJECT.NAVIGATE) - 1]: OBJECT.ALREADY_NAVIGATE = False
@@ -2363,9 +2478,6 @@ def monster_movement():
 
             if not OBJECT.NAVIGATE: OBJECT.TRACK = False
             else: OBJECT.NAVIGATE_IDX = 0
-
-        # 변신이 끝나고, 플레이어가 제스터의 attack distance안에 있다면 플레이어 먹기
-        if OBJECT.ANGRY: attack()
         
         VOLUME = get_sound_volume(OBJECT.RECT)
         if OBJECT.DOING:
@@ -2381,6 +2493,9 @@ def monster_movement():
     elif OBJECT.ID == 'girl':
         # 네비게이터 따라가기
         track()
+
+        # 발소리
+        OBJECT.WALK_SOUND = random.choice([GIRL_WALK_1, GIRL_WALK_2, GIRL_WALK_3, GIRL_WALK_4, GIRL_WALK_5, GIRL_WALK_6])
 
         # 투명한 상태로 돌아다니다가
         if OBJECT.TRANSPARENT and not OBJECT.ANGRY and not OBJECT.TRACK and not OBJECT.ALREADY_NAVIGATE:
@@ -2454,13 +2569,13 @@ def monster_movement():
                         OBJECT.ALREADY_NOPLAY = True
                     Timer(.3, other_movement, (OBJECT,)).start()
         
-        if not OBJECT.DOING and not OBJECT.TRANSPARENT or dist < OBJECT.DISTANCE and OBJECT.TRACK:
+        if not OBJECT.DOING and not OBJECT.TRANSPARENT or OBJECT.TRACK:
             if Player.LAST_ROTATE == 'front': search(Player.RECT.y < OBJECT.RECT.y)
             elif Player.LAST_ROTATE == 'back': search(Player.RECT.y > OBJECT.RECT.y)
             elif Player.LAST_ROTATE == 'left': search(Player.RECT.x > OBJECT.RECT.x)
             elif Player.LAST_ROTATE == 'right': search(Player.RECT.x < OBJECT.RECT.x)
         
-        if OBJECT.ANGRY and not (int(OBJECT.RECT.x / CONFIG['TILE_SIZE']), int(OBJECT.RECT.y / CONFIG['TILE_SIZE'])) in INGAME['VISIBLE_TILES']:
+        if OBJECT.ANGRY and not (int(OBJECT.RECT.x / CONFIG['TILE_SIZE']), int(OBJECT.RECT.y / CONFIG['TILE_SIZE'])) in INGAME['VISIBLE_TILES'] and not (int(OBJECT.RECT.x / CONFIG['TILE_SIZE']), int(OBJECT.RECT.y / CONFIG['TILE_SIZE'])) == (int(Player.RECT.x / CONFIG['TILE_SIZE']), int(Player.RECT.y / CONFIG['TILE_SIZE'])):
             OBJECT.ANGRY = False
             OBJECT.TRANSPARENT = True
 
@@ -2470,10 +2585,6 @@ def monster_movement():
             OBJECT.ALREADY_NAVIGATE = False
             OBJECT.ALREADY_PLAY = False
             OBJECT.ALREADY_NOPLAY = True
-
-        # 발소리
-        if not OBJECT.TRANSPARENT: OBJECT.WALK_SOUND = random.choice([GIRL_WALK_1, GIRL_WALK_2, GIRL_WALK_3, GIRL_WALK_4, GIRL_WALK_5, GIRL_WALK_6])
-        else: OBJECT.WALK_SOUND = None
 
         if OBJECT.ANGRY: attack()
     
@@ -2536,10 +2647,11 @@ def monster_movement():
             if not OBJECT.NAVIGATE: OBJECT.TRACK = False
             else: OBJECT.NAVIGATE_IDX = 0
 
-        if OBJECT.ANGRY: attack()
+        if OBJECT.ANGRY:
+            attack()
 
-        # 플레이어가 멀리있으면 더 빨리 추적
-        if OBJECT.ANGRY and distance(OBJECT.RECT, Player.RECT) > OBJECT.DISTANCE: track()
+            # 플레이어가 멀리있으면 더 빨리 추적
+            if distance(OBJECT.RECT, Player.RECT) > OBJECT.DISTANCE: track()
     
     # 지뢰
     elif OBJECT.ID == 'mine':
@@ -2622,7 +2734,7 @@ while INGAME['RUNNING']:
 
             pygame.draw.rect(screen, (255, 255, 255), (200, 300, 250, 80), 1)
             pygame.draw.rect(screen, (255, 255, 255), (210, 310, 230, 60), 0 if CONFIG['DEBUG'] else 1)
-            text_ = font2.render(f"디버그 모드 {'켜짐' if CONFIG['DEBUG'] else '꺼짐'}", True, (0, 0, 0) if CONFIG['DEBUG'] else (255, 255, 255))
+            text_ = font2.render(f'디버그 모드 {'켜짐' if CONFIG['DEBUG'] else '꺼짐'}', True, (0, 0, 0) if CONFIG['DEBUG'] else (255, 255, 255))
             screen.blit(text_, (225, 320))
             
             text_ = font2.render('주 음량', True, (255, 255, 255))
@@ -2769,6 +2881,9 @@ while INGAME['RUNNING']:
         # 중요한 거
         pygame.display.flip()
     # except: ...
+
+for INTERVAL in INTERVALS:
+    INTERVAL.cancel()
 
 pygame.quit()
 sys.exit()
