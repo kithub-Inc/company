@@ -105,13 +105,22 @@ def generate_map(PATH):
 def distance(RECT1, RECT2):
     return math.sqrt((RECT1.centerx - RECT2.centerx) ** 2 + (RECT1.centery - RECT2.centery) ** 2)
 
+INTERVALS = []
+INTERVAL_IDX = 0
+
 # 매 초 마다 실행
 def set_interval(CALLBACK, SEC, PARAM=None):
-    def func_wrapper():
-        set_interval(CALLBACK, SEC, PARAM)
+    global INTERVAL_IDX
+    
+    def func_wrapper(INTERVAL_IDX):
+        INTERVALS[INTERVAL_IDX] = set_interval(CALLBACK, SEC, PARAM)
         if PARAM: CALLBACK(PARAM)
         else: CALLBACK()
 
-    timer = Timer(SEC, func_wrapper)
+    timer = Timer(SEC, func_wrapper, (INTERVAL_IDX,))
     timer.start()
+
+    INTERVALS.append(timer)
+    INTERVAL_IDX += 1
+    
     return timer
