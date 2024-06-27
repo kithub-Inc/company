@@ -5,8 +5,9 @@ pygame.init()
 SOUNDS = []
 
 class Sound:
-    def __init__(self, LINK):
-        self.SOUND = pygame.mixer.Sound(LINK)
+    def __init__(self, PATH):
+        self.PATH = PATH
+        self.SOUND = pygame.mixer.Sound(self.PATH)
         SOUNDS.append(self.SOUND)
     
     def play(self, LOOPS=0):
@@ -17,6 +18,8 @@ class Sound:
     
     def set_volume(self, VOLUME):
         self.SOUND.set_volume(VOLUME)
+
+SAVE_ITEM_SFX = Sound('sounds/Lethal sounds/Sound ship/CollectScrapSmall-sharedassets3.assets-1124.wav')
 
 MAIN_MUSIC_1 = Sound('sounds/013. Ambient Music1.mp3')
 MAIN_MUSIC_2 = Sound('sounds/014. Ambient Music2.mp3')
