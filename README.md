@@ -2,10 +2,15 @@
 저는 2d버전의 **리썰컴퍼니**를 만들었습니다.<br>
 I created the 2d version of the **Lethal Company**.
 
+### 설치
+
+```bash
+$ pip install pygame gif_pygame pyautogui
+```
+
 ### 기존 게임 규칙 변경 (Change existing game rules)
 - 온라인 게임이 아닌 싱글 플레이 게임입니다. (It's a single-play game, not an online game.)
 - 가끔 길을 찾는 알고리즘이 오작동하여 몬스터가 움직이지 않을 수 있습니다. (Sometimes, the navigation algorithm may malfunction, preventing the monster from moving.)
-- 플레이한 게임은 저장되지 않습니다. (The game you played will not be saved.)
 
 <br>
 
