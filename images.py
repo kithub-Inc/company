@@ -140,6 +140,9 @@ gif_pygame.transform.scale(EGG_BEATER_IMAGE, (1 * CONFIG['TILE_SIZE'], 1 * CONFI
 BRASS_BELL_IMAGE = gif_pygame.load('images/item/brass_bell.gif')
 gif_pygame.transform.scale(BRASS_BELL_IMAGE, (1 * CONFIG['TILE_SIZE'], 1 * CONFIG['TILE_SIZE']))
 
+SPEAR_IMAGE = gif_pygame.load('images/item/응민이의뭐든지뚫는창.gif')
+gif_pygame.transform.scale(SPEAR_IMAGE, (1 * CONFIG['TILE_SIZE'], 1 * CONFIG['TILE_SIZE']))
+
 HOARDING_BUG_IMAGE = gif_pygame.load('images/monster/hoarding_bug/hoarding_bug_image.gif')
 gif_pygame.transform.scale(HOARDING_BUG_IMAGE, (1 * CONFIG['TILE_SIZE'], 1 * CONFIG['TILE_SIZE']))
 HOARDING_BUG_WALK_IMAGE = gif_pygame.load('images/monster/hoarding_bug/hoarding_bug_walk_image.gif')
